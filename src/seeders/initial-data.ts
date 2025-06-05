@@ -1,266 +1,220 @@
 import { QueryInterface, DataTypes, Sequelize } from 'sequelize';
 import bcrypt from 'bcryptjs';
-import { sequelize } from '../models'; // Import your configured sequelize instance
+import { sequelize } from '../models';
 
-const SEED_PASSWORD = 'password123'; // Base password for all seed users
+const SEED_PASSWORD = 'password123';
+const FIXED_HASHED_PASSWORD =
+  '$2a$10$Ew/nQ.8i5y1T5.6.8X809.e1qWq3c0wM8v5t0k4s.2V6x0J6W7x.';
 
-// Re-defining this interface for clarity, though it's already used below.
 interface BulkInsertResult {
   id: number;
 }
 
 const seeder = {
   up: async (queryInterface: QueryInterface) => {
-    // Hash the password once
-    const hashedPassword = await bcrypt.hash(SEED_PASSWORD, 10);
+    const hashedPassword = FIXED_HASHED_PASSWORD;
+    const NOW = new Date();
 
-    // 1. Seed Users
-    const users = (await queryInterface.bulkInsert(
-      'users',
-      [
-        {
-          name: 'Admin User',
-          email: 'admin@example.com',
-          password: hashedPassword,
-          phone: '11987654321',
-          role: 'admin',
-          created_at: new Date(),
-          updated_at: new Date(),
-        },
-        {
-          name: 'Manager User',
-          email: 'manager@example.com',
-          password: hashedPassword,
-          phone: '21987654321',
-          role: 'manager',
-          created_at: new Date(),
-          updated_at: new Date(),
-        },
-        {
-          name: 'Regular User One',
-          email: 'user1@example.com',
-          password: hashedPassword,
-          phone: '31987654321',
-          role: 'regular',
-          created_at: new Date(),
-          updated_at: new Date(),
-        },
-        {
-          name: 'Regular User Two',
-          email: 'user2@example.com',
-          password: hashedPassword,
-          phone: '41987654321',
-          role: 'regular',
-          created_at: new Date(),
-          updated_at: new Date(),
-        },
-      ],
-      { returning: ['id'] } as any,
-    )) as BulkInsertResult[]; // Cast options to any
+    const getRandomInt = (min: number, max: number) =>
+      Math.floor(Math.random() * (max - min + 1)) + min;
+    const getRandomItem = (arr: any[]) => arr[getRandomInt(0, arr.length - 1)];
+    const getRandomBool = () => Math.random() < 0.5;
 
-    const adminUserId = users[0].id;
-    const managerUserId = users[1].id;
-    const user1Id = users[2].id;
-    const user2Id = users[3].id;
+    const spaceTypes = [
+      'meeting_room',
+      'sports_court',
+      'auditorium',
+      'coworking',
+      'event_hall',
+      'studio',
+    ];
+    const resourceNames = [
+      'Projetor HD',
+      'Quadro Branco',
+      'Sistema de Som',
+      'Cadeiras Extras',
+      'Smart TV',
+      'Máquina de Café',
+      'Tela de Projeção',
+      'Microfones Sem Fio',
+      'Fliperama',
+      'Mesa de Bilhar',
+      'Iluminação Cênica',
+      'Equipamento de Yoga',
+    ];
+    const userRoles = ['regular', 'manager'];
 
-    // 2. Seed Spaces
-    const spaces = (await queryInterface.bulkInsert(
-      'spaces',
-      [
-        {
-          name: 'Sala de Reunião Alpha',
-          type: 'meeting_room',
-          capacity: 10,
-          description: 'Sala com projetor e tela para reuniões',
-          manager_id: managerUserId,
-          isAvailable: true,
-          created_at: new Date(),
-          updated_at: new Date(),
-        },
-        {
-          name: 'Quadra Poliesportiva',
-          type: 'sports_court',
-          capacity: 30,
-          description: 'Quadra para futebol, basquete e vôlei',
-          manager_id: adminUserId, // Admin manages this one
-          isAvailable: true,
-          created_at: new Date(),
-          updated_at: new Date(),
-        },
-        {
-          name: 'Auditório Principal',
-          type: 'auditorium',
-          capacity: 100,
-          description: 'Auditório para grandes eventos e palestras',
-          manager_id: managerUserId,
-          isAvailable: false, // Not available for now
-          created_at: new Date(),
-          updated_at: new Date(),
-        },
-        {
-          name: 'Coworking Space B',
-          type: 'coworking',
-          capacity: 20,
-          description: 'Espaço de trabalho compartilhado com mesas e internet',
-          manager_id: adminUserId,
-          isAvailable: true,
-          created_at: new Date(),
-          updated_at: new Date(),
-        },
-      ],
-      { returning: ['id'] } as any,
-    )) as BulkInsertResult[]; // Cast options to any
+    const usersToInsert = [];
+    usersToInsert.push({
+      name: 'Admin User',
+      email: 'admin@example.com',
+      password: hashedPassword,
+      phone: '11987654321',
+      role: 'admin',
+      created_at: NOW,
+      updated_at: NOW,
+    });
+    usersToInsert.push({
+      name: 'Manager One',
+      email: 'manager1@example.com',
+      password: hashedPassword,
+      phone: '21987654321',
+      role: 'manager',
+      created_at: NOW,
+      updated_at: NOW,
+    });
+    usersToInsert.push({
+      name: 'Manager Two',
+      email: 'manager2@example.com',
+      password: hashedPassword,
+      phone: '22987654321',
+      role: 'manager',
+      created_at: NOW,
+      updated_at: NOW,
+    });
+    for (let i = 1; i <= 17; i++) {
+      usersToInsert.push({
+        name: `Regular User ${i}`,
+        email: `user${i}@example.com`,
+        password: hashedPassword,
+        phone: `3${i.toString().padStart(10, '0')}`,
+        role: 'regular',
+        created_at: NOW,
+        updated_at: NOW,
+      });
+    }
+    const users = (await queryInterface.bulkInsert('users', usersToInsert, {
+      returning: ['id'],
+    } as any)) as BulkInsertResult[];
+    const managerUserIds = users.slice(1, 3).map(u => u.id);
+    const allUserIds = users.map(u => u.id);
 
-    const salaAlphaId = spaces[0].id;
-    const quadraId = spaces[1].id;
-    const auditorioId = spaces[2].id;
-    const coworkingBId = spaces[3].id;
-
-    // 3. Seed Resources
+    const resourcesToInsert = [];
+    for (let i = 0; i < resourceNames.length; i++) {
+      resourcesToInsert.push({
+        name: resourceNames[i],
+        description: `Description for ${resourceNames[i]}`,
+        available_quantity: getRandomInt(1, 20),
+        created_at: NOW,
+        updated_at: NOW,
+      });
+    }
     const resources = (await queryInterface.bulkInsert(
       'resources',
-      [
-        {
-          name: 'Projetor HD',
-          description: 'Projetor de alta definição',
-          available_quantity: 5,
-          created_at: new Date(),
-          updated_at: new Date(),
-        },
-        {
-          name: 'Quadro Branco',
-          description: 'Quadro branco com canetas e apagador',
-          available_quantity: 10,
-          created_at: new Date(),
-          updated_at: new Date(),
-        },
-        {
-          name: 'Sistema de Som',
-          description: 'Sistema de som profissional com microfones',
-          available_quantity: 2,
-          created_at: new Date(),
-          updated_at: new Date(),
-        },
-        {
-          name: 'Cadeiras Extras',
-          description: 'Cadeiras adicionais para eventos',
-          available_quantity: 50,
-          created_at: new Date(),
-          updated_at: new Date(),
-        },
-      ],
+      resourcesToInsert,
       { returning: ['id'] } as any,
-    )) as BulkInsertResult[]; // Cast options to any
+    )) as BulkInsertResult[];
+    const resourceIds = resources.map(r => r.id);
 
-    const projetorId = resources[0].id;
-    const quadroBrancoId = resources[1].id;
-    const sistemaSomId = resources[2].id;
-    const cadeirasExtrasId = resources[3].id;
+    // --- 3. Seed Spaces (20 spaces) ---
+    const spacesToInsert = [];
+    for (let i = 1; i <= 20; i++) {
+      const type = getRandomItem(spaceTypes);
+      const capacity =
+        type === 'auditorium' ? getRandomInt(50, 200) : getRandomInt(5, 50);
+      const isAvailable = getRandomBool();
+      const managerId = getRandomItem(managerUserIds);
+      const price = parseFloat((Math.random() * 500 + 50).toFixed(2));
+      const imageUrl = null;
 
-    // 4. Seed Space Resources (linking spaces to resources)
-    await queryInterface.bulkInsert('space_resources', [
-      {
-        space_id: salaAlphaId,
-        resource_id: projetorId,
-        quantity: 1,
-        created_at: new Date(),
-        updated_at: new Date(),
-      },
-      {
-        space_id: salaAlphaId,
-        resource_id: quadroBrancoId,
-        quantity: 1,
-        created_at: new Date(),
-        updated_at: new Date(),
-      },
-      {
-        space_id: quadraId,
-        resource_id: sistemaSomId,
-        quantity: 1,
-        created_at: new Date(),
-        updated_at: new Date(),
-      },
-      {
-        space_id: auditorioId,
-        resource_id: sistemaSomId,
-        quantity: 1,
-        created_at: new Date(),
-        updated_at: new Date(),
-      },
-      {
-        space_id: auditorioId,
-        resource_id: cadeirasExtrasId,
-        quantity: 30, // Auditorium comes with 30 extra chairs
-        created_at: new Date(),
-        updated_at: new Date(),
-      },
-      {
-        space_id: coworkingBId,
-        resource_id: quadroBrancoId,
-        quantity: 2,
-        created_at: new Date(),
-        updated_at: new Date(),
-      },
-    ]);
+      spacesToInsert.push({
+        name: `Space ${i}`, // <-- REMOVED: (${type.replace('_', ' ')})
+        type: type,
+        capacity: capacity,
+        description: `This is a beautiful ${type.replace('_', ' ')} for your needs.`,
+        manager_id: managerId,
+        isAvailable: isAvailable,
+        imageUrl: imageUrl,
+        price: price,
+        created_at: NOW,
+        updated_at: NOW,
+      });
+    }
 
-    // 5. Seed Reservations (Ensure future dates relative to current time)
-    const now = new Date();
-    // Using current time: Sunday, June 1, 2025 at 4:13:15 PM -03.
-    // Ensure these dates are well into the future from when you run the seed.
-    const oneDay = 24 * 60 * 60 * 1000; // milliseconds in a day
+    const spaces = (await queryInterface.bulkInsert('spaces', spacesToInsert, {
+      returning: ['id'],
+    } as any)) as BulkInsertResult[];
+    const spaceIds = spaces.map(s => s.id);
 
-    const reservation1StartTime = new Date(
-      now.getTime() + 2 * oneDay + 1 * 60 * 60 * 1000,
-    ); // 2 days and 1 hour from now
-    const reservation1EndTime = new Date(
-      reservation1StartTime.getTime() + 1 * 60 * 60 * 1000,
-    ); // 1 hour duration
+    const spaceResourcesToInsert = [];
+    for (const spaceId of spaceIds) {
+      const numResources = getRandomInt(1, 3);
+      const assignedResourceIds: number[] = [];
+      for (let i = 0; i < numResources; i++) {
+        let resourceId = getRandomItem(resourceIds);
+        while (assignedResourceIds.includes(resourceId)) {
+          resourceId = getRandomItem(resourceIds);
+        }
+        assignedResourceIds.push(resourceId);
+        spaceResourcesToInsert.push({
+          space_id: spaceId,
+          resource_id: resourceId,
+          quantity: getRandomInt(1, 5),
+          created_at: NOW,
+          updated_at: NOW,
+        });
+      }
+    }
+    await queryInterface.bulkInsert('space_resources', spaceResourcesToInsert);
 
-    const reservation2StartTime = new Date(
-      now.getTime() + 3 * oneDay + 10 * 60 * 60 * 1000,
-    ); // 3 days and 10 hours from now
-    const reservation2EndTime = new Date(
-      reservation2StartTime.getTime() + 2 * 60 * 60 * 1000,
-    ); // 2 hour duration
+    const reservationsToInsert = [];
+    const oneHour = 60 * 60 * 1000;
+    const oneDay = 24 * oneHour;
 
-    const reservation3StartTime = new Date(
-      now.getTime() + 4 * oneDay + 14 * 60 * 60 * 1000,
-    ); // 4 days and 14 hours from now
-    const reservation3EndTime = new Date(
-      reservation3StartTime.getTime() + 3 * 60 * 60 * 1000,
-    ); // 3 hour duration
+    for (let i = 1; i <= 20; i++) {
+      const userId = getRandomItem(allUserIds);
+      const spaceId = getRandomItem(spaceIds);
 
-    await queryInterface.bulkInsert('reservations', [
-      {
-        space_id: salaAlphaId,
-        user_id: user1Id,
-        start_time: reservation1StartTime,
-        end_time: reservation1EndTime,
-        status: 'confirmada',
-        created_at: new Date(),
-      },
-      {
-        space_id: quadraId,
-        user_id: user2Id,
-        start_time: reservation2StartTime,
-        end_time: reservation2EndTime,
-        status: 'pendente',
-        created_at: new Date(),
-      },
-      {
-        space_id: salaAlphaId,
-        user_id: managerUserId,
-        start_time: reservation3StartTime,
-        end_time: reservation3EndTime,
-        status: 'pendente',
-        created_at: new Date(),
-      },
-    ]);
+      const startTime = new Date(
+        NOW.getTime() +
+          getRandomInt(1, 30) * oneDay +
+          getRandomInt(0, 23) * oneHour,
+      );
+      const endTime = new Date(
+        startTime.getTime() + getRandomInt(1, 4) * oneHour,
+      );
+      const status = getRandomItem(['pendente', 'confirmada', 'cancelada']);
+
+      reservationsToInsert.push({
+        space_id: spaceId,
+        user_id: userId,
+        start_time: startTime,
+        end_time: endTime,
+        status: status,
+        created_at: NOW,
+      });
+    }
+    const reservations = (await queryInterface.bulkInsert(
+      'reservations',
+      reservationsToInsert,
+      { returning: ['id'] } as any,
+    )) as BulkInsertResult[];
+
+    const reservationHistoryToInsert = [];
+    const actions = ['created', 'status_changed', 'cancelled', 'completed'];
+
+    for (const reservation of reservations.slice(0, 10)) {
+      const actionCount = getRandomInt(1, 3);
+      for (let i = 0; i < actionCount; i++) {
+        const actionUser = getRandomItem(allUserIds);
+        const action = getRandomItem(actions);
+        reservationHistoryToInsert.push({
+          reservation_id: reservation.id,
+          action: action,
+          action_date: new Date(NOW.getTime() + getRandomInt(0, 5) * oneDay),
+          action_user: actionUser,
+          details: `Action '${action}' performed on reservation ${reservation.id} by user ${actionUser}`,
+        });
+      }
+    }
+    await queryInterface.bulkInsert(
+      'reservation_history',
+      reservationHistoryToInsert,
+    );
   },
 
   down: async (queryInterface: QueryInterface) => {
-    // Delete in reverse order to respect foreign key constraints
-    // (Note: reservation_history is automatically handled by CASCADE if configured or needs explicit deletion)
+    await queryInterface.bulkDelete('reservation_history', {}, {});
     await queryInterface.bulkDelete('reservations', {}, {});
     await queryInterface.bulkDelete('space_resources', {}, {});
     await queryInterface.bulkDelete('resources', {}, {});
@@ -269,12 +223,11 @@ const seeder = {
   },
 };
 
-// This allows direct execution of the file for seeding
 if (require.main === module) {
   const runSeed = async () => {
     try {
       console.log('Connecting to database...');
-      await sequelize.authenticate(); // Ensure connection is established
+      await sequelize.authenticate();
       console.log('Database connected. Running seed...');
 
       const args = process.argv.slice(2);
@@ -290,8 +243,6 @@ if (require.main === module) {
       console.error('Seeding failed:', error);
       process.exit(1);
     } finally {
-      // Ensure the database connection is closed after the seed operation
-      // Use getDialect() instead of options.dialect
       if (sequelize.getDialect() === 'postgres') {
         await sequelize.close();
       }

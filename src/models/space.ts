@@ -1,6 +1,6 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import { sequelize } from '../config/database';
-import { User } from './user'; // Import User for association
+import { User } from './user';
 
 interface SpaceAttributes {
   id: number;
@@ -34,7 +34,6 @@ class Space
   public manager_id?: number;
   public isAvailable!: boolean;
 
-  // Timestamps
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
@@ -63,8 +62,8 @@ Space.init(
       allowNull: true,
     },
     price: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true,
       defaultValue: 0,
     },
     description: {
@@ -73,9 +72,9 @@ Space.init(
     },
     manager_id: {
       type: DataTypes.INTEGER,
-      allowNull: true, // Can be NULL as per DDL (ON DELETE SET NULL)
+      allowNull: true,
       references: {
-        model: 'users', // Refers to the table name 'users'
+        model: 'users',
         key: 'id',
       },
       onDelete: 'SET NULL',
@@ -88,8 +87,8 @@ Space.init(
   {
     sequelize,
     tableName: 'spaces',
-    timestamps: true, // Sequelize adds createdAt and updatedAt columns
-    createdAt: 'created_at', // Map 'createdAt' model attribute to 'created_at' column
+    timestamps: true,
+    createdAt: 'created_at',
     updatedAt: 'updated_at',
   },
 );
