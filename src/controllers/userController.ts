@@ -1,5 +1,5 @@
-import { Request, Response } from "express";
-import { User } from "../models/user";
+import { Request, Response } from 'express';
+import { User } from '../models/user';
 
 interface AuthRequest extends Request {
   user?: {
@@ -10,11 +10,11 @@ interface AuthRequest extends Request {
 
 export const getUsers = async (req: Request, res: Response) => {
   try {
-    const users = await User.findAll({ attributes: { exclude: ["password"] } });
+    const users = await User.findAll({ attributes: { exclude: ['password'] } });
     res.status(200).json(users);
   } catch (error) {
-    console.error("Error fetching users:", error);
-    res.status(500).json({ message: "Server error fetching users" });
+    console.error('Error fetching users:', error);
+    res.status(500).json({ message: 'Server error fetching users' });
   }
 };
 
@@ -22,35 +22,70 @@ export const getUserById = async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
     const user = await User.findByPk(id, {
-      attributes: { exclude: ["password"] },
+      attributes: { exclude: ['password'] },
     });
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: 'User not found' });
     }
     res.status(200).json(user);
   } catch (error) {
-    console.error("Error fetching user by ID:", error);
-    res.status(500).json({ message: "Server error fetching user" });
+    console.error('Error fetching user by ID:', error);
+    res.status(500).json({ message: 'Server error fetching user' });
   }
 };
 
-// Example of a protected route to get current user's profile
 export const getMyProfile = async (req: AuthRequest, res: Response) => {
   try {
     if (!req.user) {
-      return res.status(401).json({ message: "Not authenticated" });
+      return res.status(401).json({ message: 'Not authenticated' });
     }
     const user = await User.findByPk(req.user.id, {
-      attributes: { exclude: ["password"] },
+      attributes: { exclude: ['password'] },
     });
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: 'User not found' });
     }
     res.status(200).json(user);
   } catch (error) {
-    console.error("Error fetching my profile:", error);
-    res.status(500).json({ message: "Server error fetching profile" });
+    console.error('Error fetching my profile:', error);
+    res.status(500).json({ message: 'Server error fetching profile' });
   }
 };
 
-// Add more CRUD operations (update, delete) with appropriate authorization
+export const login = async (req: Request, res: Response) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({
+      where: { email, password },
+    });
+
+    if (!user) return res.status(404).json({ message: 'User Not Found' });
+
+    const { id, name, role } = user;
+
+    return res.status(200).json({ id, name, role });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error fetching profile' });
+  }
+};
+
+export const register = async (req: Request, res: Response) => {
+  try {
+    const { email, password, phone, name } = req.body;
+
+    const user = await User.create({
+      email,
+      password,
+      phone,
+      name,
+      role: 'regular',
+    });
+
+    return res.status(201).json(user);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'User create fail' });
+  }
+};

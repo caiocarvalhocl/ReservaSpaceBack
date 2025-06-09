@@ -13,7 +13,7 @@ interface UserAttributes {
 interface UserCreationAttributes
   extends Optional<UserAttributes, 'id' | 'role'> {}
 
-class User
+export class User
   extends Model<UserAttributes, UserCreationAttributes>
   implements UserAttributes
 {
@@ -67,5 +67,3 @@ User.init(
     updatedAt: 'updated_at',
   },
 );
-
-export { User };
