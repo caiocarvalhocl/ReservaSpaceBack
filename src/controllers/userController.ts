@@ -75,7 +75,7 @@ export const register = async (req: Request, res: Response) => {
   try {
     const { email, password, phone, name } = req.body;
 
-    const user = await User.create({
+    await User.create({
       email,
       password,
       phone,
@@ -83,7 +83,15 @@ export const register = async (req: Request, res: Response) => {
       role: 'regular',
     });
 
-    return res.status(201).json(user);
+    const user = await User.findOne({
+      where: { email, password },
+    });
+
+    if (!user) return res.status(404).json({ message: 'User Not Found' });
+
+    const { id, role } = user;
+
+    return res.status(201).json({ id, name, role });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'User create fail' });
