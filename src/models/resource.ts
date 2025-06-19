@@ -5,7 +5,7 @@ interface ResourceAttributes {
   id: number;
   name: string;
   description?: string;
-  available_quantity: number;
+  availableQuantity: number;
 }
 
 interface ResourceCreationAttributes
@@ -18,7 +18,7 @@ class Resource
   public id!: number;
   public name!: string;
   public description?: string;
-  public available_quantity!: number;
+  public availableQuantity!: number;
 
   // Timestamps
   public readonly createdAt!: Date;
@@ -40,7 +40,7 @@ Resource.init(
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    available_quantity: {
+    availableQuantity: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
@@ -49,8 +49,8 @@ Resource.init(
     sequelize,
     tableName: 'resources', // Match your DDL table name
     timestamps: true, // Sequelize adds createdAt and updatedAt columns
-    createdAt: 'created_at', // Map 'createdAt' model attribute to 'created_at' column
-    updatedAt: 'updated_at',
+    createdAt: 'createdAt', // Map 'createdAt' model attribute to 'created_at' column
+    updatedAt: 'updatedAt',
   },
 );
 

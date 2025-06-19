@@ -1,36 +1,35 @@
-import { Router } from "express";
+import { Router } from 'express';
 import {
   authenticateToken,
   authorizeRole,
-} from "../middlewares/authMiddleware";
+} from '../middlewares/authMiddleware';
 import {
   createResource,
   getAllResources,
   getResourceById,
   updateResource,
   deleteResource,
-} from "../controllers/resourceController";
+} from '../controllers/resourceController';
 
 export const resourceRoutes = Router();
 
-// Routes for Resources
 resourceRoutes.post(
-  "/",
+  '/',
   authenticateToken,
-  authorizeRole(["admin"]),
+  authorizeRole(['admin']),
   createResource,
 );
-resourceRoutes.get("/", authenticateToken, getAllResources);
-resourceRoutes.get("/:id", authenticateToken, getResourceById);
+resourceRoutes.get('/', authenticateToken, getAllResources);
+resourceRoutes.get('/:id', authenticateToken, getResourceById);
 resourceRoutes.put(
-  "/:id",
+  '/:id',
   authenticateToken,
-  authorizeRole(["admin"]),
+  authorizeRole(['admin']),
   updateResource,
 );
 resourceRoutes.delete(
-  "/:id",
+  '/:id',
   authenticateToken,
-  authorizeRole(["admin"]),
+  authorizeRole(['admin']),
   deleteResource,
 );

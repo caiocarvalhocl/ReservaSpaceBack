@@ -3,20 +3,20 @@ import { sequelize } from '../config/database';
 
 interface ReservationHistoryAttributes {
   id: number;
-  reservation_id: number;
+  reservationId: number;
   action: string;
-  action_date?: Date;
-  action_user?: number;
+  actionDate?: Date;
+  actionUser?: number;
   details?: string;
 }
 
 interface ReservationHistoryCreationAttributes
   extends Optional<
     ReservationHistoryAttributes,
-    'id' | 'action_date' | 'details' | 'action_user'
+    'id' | 'actionDate' | 'details' | 'actionUser'
   > {}
 
-class ReservationHistory
+export class ReservationHistory
   extends Model<
     ReservationHistoryAttributes,
     ReservationHistoryCreationAttributes
@@ -24,13 +24,12 @@ class ReservationHistory
   implements ReservationHistoryAttributes
 {
   public id!: number;
-  public reservation_id!: number;
+  public reservationId!: number;
   public action!: string;
-  public action_date!: Date; // The DDL has a default, so it's always there
-  public action_user?: number;
+  public actionDate!: Date;
+  public actionUser?: number;
   public details?: string;
 
-  // Timestamps (Sequelize adds createdAt and updatedAt by default)
   public readonly createdAt!: Date;
 }
 
@@ -41,7 +40,7 @@ ReservationHistory.init(
       autoIncrement: true,
       primaryKey: true,
     },
-    reservation_id: {
+    reservationId: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
@@ -53,15 +52,15 @@ ReservationHistory.init(
       type: DataTypes.TEXT,
       allowNull: false,
     },
-    action_date: {
+    actionDate: {
       type: DataTypes.DATE,
       allowNull: false,
       defaultValue: DataTypes.NOW,
-      field: 'action_date', // Maps this attribute to the DDL column name
+      field: 'actionDate',
     },
-    action_user: {
+    actionUser: {
       type: DataTypes.INTEGER,
-      allowNull: true, // Can be NULL as per DDL
+      allowNull: true,
       references: {
         model: 'users',
         key: 'id',
@@ -74,11 +73,9 @@ ReservationHistory.init(
   },
   {
     sequelize,
-    tableName: 'reservation_history', // Match your DDL table name
+    tableName: 'reservation_history',
     timestamps: true,
-    updatedAt: false, // You don't have updatedAt in DDL, so disable it
-    createdAt: 'action_date', // Map Sequelize's `createdAt` to `action_date` column in DDL
+    updatedAt: false,
+    createdAt: 'actionDate',
   },
 );
-
-export { ReservationHistory };

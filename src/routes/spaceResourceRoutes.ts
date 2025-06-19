@@ -1,27 +1,26 @@
-import { Router } from "express";
+import { Router } from 'express';
 import {
   authenticateToken,
   authorizeRole,
-} from "../middlewares/authMiddleware";
+} from '../middlewares/authMiddleware';
 import {
   addOrUpdateSpaceResource,
   getResourcesForSpace,
   removeResourceFromSpace,
-} from "../controllers/spaceResourceController";
+} from '../controllers/spaceResourceController';
 
 export const spaceResourceRoutes = Router();
 
-// Routes for Space-Resource association
 spaceResourceRoutes.post(
-  "/",
+  '/',
   authenticateToken,
-  authorizeRole(["admin", "manager"]),
+  authorizeRole(['admin', 'manager']),
   addOrUpdateSpaceResource,
-); // Add or update quantity
-spaceResourceRoutes.get("/:spaceId", authenticateToken, getResourcesForSpace); // Get resources for a specific space
+);
+spaceResourceRoutes.get('/:spaceId', authenticateToken, getResourcesForSpace);
 spaceResourceRoutes.delete(
-  "/:spaceId/:resourceId",
+  '/:spaceId/:resourceId',
   authenticateToken,
-  authorizeRole(["admin", "manager"]),
+  authorizeRole(['admin', 'manager']),
   removeResourceFromSpace,
-); // Remove specific resource from space
+);

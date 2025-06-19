@@ -3,35 +3,28 @@ import { sequelize } from '../config/database';
 
 interface ReservationAttributes {
   id: number;
-  space_id: number;
-  user_id: number;
-  start_time: Date;
-  end_time: Date;
-  status: 'pendente' | 'confirmada' | 'cancelada' | 'concluida'; // Example statuses
-  created_at?: Date;
+  spaceId: number;
+  userId: number;
+  startTime: Date;
+  endTime: Date;
+  status: 'pending' | 'confirmed' | 'canceled' | 'completed';
+  createdAt?: Date;
 }
 
 interface ReservationCreationAttributes
-  extends Optional<ReservationAttributes, 'id' | 'status' | 'created_at'> {}
+  extends Optional<ReservationAttributes, 'id' | 'status' | 'createdAt'> {}
 
 class Reservation
   extends Model<ReservationAttributes, ReservationCreationAttributes>
   implements ReservationAttributes
 {
   public id!: number;
-  public space_id!: number;
-  public user_id!: number;
-  public start_time!: Date;
-  public end_time!: Date;
-  public status!: 'pendente' | 'confirmada' | 'cancelada' | 'concluida';
-
-  // DDL specifies `created_at` default, so using Sequelize's `createdAt` timestamp
-  // We'll rename it in the model definition to match DDL for clarity.
+  public spaceId!: number;
+  public userId!: number;
+  public startTime!: Date;
+  public endTime!: Date;
+  public status!: 'pending' | 'confirmed' | 'canceled' | 'completed';
   public readonly createdAt!: Date;
-
-  // Define a custom getter/setter for created_at if you strictly need it,
-  // but Sequelize's default `createdAt` maps directly to your DDL.
-  // We'll map it directly in the init method.
 }
 
 Reservation.init(
@@ -41,7 +34,7 @@ Reservation.init(
       autoIncrement: true,
       primaryKey: true,
     },
-    space_id: {
+    spaceId: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
@@ -49,7 +42,7 @@ Reservation.init(
         key: 'id',
       },
     },
-    user_id: {
+    userId: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
@@ -57,44 +50,36 @@ Reservation.init(
         key: 'id',
       },
     },
-    start_time: {
+    startTime: {
       type: DataTypes.DATE,
       allowNull: false,
     },
-    end_time: {
+    endTime: {
       type: DataTypes.DATE,
       allowNull: false,
     },
     status: {
       type: DataTypes.TEXT,
       allowNull: false,
-      defaultValue: 'pendente',
+      defaultValue: 'pending',
     },
-    created_at: {
-      // Explicitly define to match DDL name if needed
+    createdAt: {
       type: DataTypes.DATE,
       allowNull: false,
       defaultValue: DataTypes.NOW,
-      field: 'created_at', // Maps this attribute to the DDL column name
+      field: 'createdAt',
     },
   },
   {
     sequelize,
-    tableName: 'reservations', // Match your DDL table name
-    timestamps: true, // This enables createdAt and updatedAt
-    updatedAt: false, // You don't have updatedAt in DDL, so disable it
-    createdAt: 'created_at', // Map Sequelize's `createdAt` to `created_at` column in DDL
-    // Add a check constraint for end_time > start_time.
-    // Sequelize supports constraints directly, but for DDL level checks,
-    // it's often better handled at the database level.
-    // However, you can add model validations for application-level checks.
+    tableName: 'reservations',
+    timestamps: true,
+    updatedAt: false,
+    createdAt: 'createdAt',
+
     validate: {
       endTimeAfterStartTime() {
-        if (
-          this.start_time &&
-          this.end_time &&
-          this.end_time <= this.start_time
-        ) {
+        if (this.startTime && this.endTime && this.endTime <= this.startTime) {
           throw new Error('End time must be after start time.');
         }
       },

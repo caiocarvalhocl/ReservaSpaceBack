@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { Space, User, SpaceResource, Resource } from '../models'; // Import Space and User models
+import { Space, User, SpaceResource, Resource, Reservation } from '../models';
 import { CustomError } from '../middlewares/errorHandler';
+import { Op } from 'sequelize';
 
-// Extend Request to include user property from auth middlewares
 interface AuthRequest extends Request {
   user?: {
     id: number;
@@ -10,14 +10,13 @@ interface AuthRequest extends Request {
   };
 }
 
-// Create a new Space (Admin or Manager)
 export const createSpace = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction,
 ) => {
   try {
-    const { name, type, capacity, description, manager_id, isAvailable } =
+    const { name, type, capacity, description, managerId, isAvailable } =
       req.body;
     const userId = req.user?.id;
     const userRole = req.user?.role;
@@ -26,24 +25,22 @@ export const createSpace = async (
       throw new CustomError('Name, type, and capacity are required.', 400);
     }
 
-    // Determine the manager_id: if admin, use provided; if manager, use their own ID
-    let finalManagerId = manager_id;
+    let finalManagerId = managerId;
     if (userRole === 'manager') {
-      finalManagerId = userId; // A manager can only create spaces they manage
-    } else if (userRole !== 'admin' && manager_id) {
+      finalManagerId = userId;
+    } else if (userRole !== 'admin' && managerId) {
       throw new CustomError(
-        'Forbidden: Only managers and admins can specify a manager_id.',
+        'Forbidden: Only managers and admins can specify a managerId.',
         403,
       );
     }
 
-    // Optional: Validate if manager_id exists if provided
     if (finalManagerId) {
       const managerExists = await User.findByPk(finalManagerId);
       if (!managerExists) {
         throw new CustomError('Specified manager ID does not exist.', 400);
       }
-      // Optional: Ensure the specified manager is actually a 'manager' role
+
       if (managerExists.role !== 'manager' && managerExists.role !== 'admin') {
         throw new CustomError(
           'A regular user cannot be assigned as a space manager.',
@@ -57,8 +54,8 @@ export const createSpace = async (
       type,
       capacity,
       description,
-      manager_id: finalManagerId,
-      isAvailable: isAvailable !== undefined ? isAvailable : false, // Default to false if not provided
+      managerId: finalManagerId,
+      isAvailable: isAvailable !== undefined ? isAvailable : false,
     });
 
     res
@@ -69,7 +66,6 @@ export const createSpace = async (
   }
 };
 
-// Get all Spaces (All authenticated users)
 export const getAllSpaces = async (
   req: AuthRequest,
   res: Response,
@@ -77,6 +73,9 @@ export const getAllSpaces = async (
 ) => {
   try {
     const spaces = await Space.findAll({
+      where: {
+        status: 'active',
+      },
       include: [
         { model: User, as: 'manager', attributes: ['id', 'name', 'email'] },
         {
@@ -99,7 +98,6 @@ export const getAllSpaces = async (
   }
 };
 
-// Get Space by ID (All authenticated users)
 export const getSpaceById = async (
   req: AuthRequest,
   res: Response,
@@ -135,7 +133,105 @@ export const getSpaceById = async (
   }
 };
 
-// Update a Space (Admin or the space's manager)
+export const getLastReservationForSpaceAndUser = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.user?.id;
+    const spaceId = parseInt(req.params.spaceId, 10);
+
+    if (!userId) {
+      throw new CustomError('Usuário não autenticado.', 401);
+    }
+
+    if (isNaN(spaceId)) {
+      throw new CustomError('ID do espaço inválido.', 400);
+    }
+
+    const lastReservation = await Reservation.findOne({
+      where: {
+        spaceId: spaceId,
+        userId: userId,
+      },
+      order: [['createdAt', 'DESC']],
+      include: [
+        {
+          model: Space,
+          as: 'space',
+          attributes: ['id'],
+        },
+        {
+          model: User,
+          as: 'user',
+          attributes: ['id'],
+        },
+      ],
+    });
+
+    if (!lastReservation) {
+      return res.status(404).json({
+        message: 'Nenhuma reserva encontrada para este espaço e usuário.',
+      });
+    }
+
+    res.status(200).json(lastReservation);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getMySpaces = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      throw new CustomError('User not authenticated.', 401);
+    }
+
+    const mySpaces = await Space.findAll({
+      where: { managerId: userId },
+      include: [
+        { model: User, as: 'manager', attributes: ['id', 'name', 'email'] },
+        {
+          model: SpaceResource,
+          as: 'spaceResources',
+          attributes: ['quantity'],
+          include: [
+            {
+              model: Resource,
+              as: 'resource',
+              attributes: ['id', 'name', 'description'],
+            },
+          ],
+        },
+        {
+          model: Reservation,
+          as: 'reservations',
+          where: {
+            status: {
+              [Op.ne]: 'cancelada',
+            },
+          },
+          order: [['createdAt', 'DESC']],
+          attributes: ['createdAt'],
+          limit: 1,
+          required: false,
+        },
+      ],
+    });
+
+    res.status(200).json(mySpaces);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const updateSpace = async (
   req: AuthRequest,
   res: Response,
@@ -143,7 +239,7 @@ export const updateSpace = async (
 ) => {
   try {
     const { id } = req.params;
-    const { name, type, capacity, description, manager_id, isAvailable } =
+    const { name, type, capacity, description, managerId, isAvailable } =
       req.body;
     const userId = req.user?.id;
     const userRole = req.user?.role;
@@ -154,18 +250,16 @@ export const updateSpace = async (
       throw new CustomError('Space not found.', 404);
     }
 
-    // Authorization: Only admin or the assigned manager can update the space
-    if (userRole !== 'admin' && space.manager_id !== userId) {
+    if (userRole !== 'admin' && space.managerId !== userId) {
       throw new CustomError(
         'Forbidden: You are not authorized to update this space.',
         403,
       );
     }
 
-    // If manager_id is being changed, only admin can do it
     if (
-      manager_id !== undefined &&
-      manager_id !== space.manager_id &&
+      managerId !== undefined &&
+      managerId !== space.managerId &&
       userRole !== 'admin'
     ) {
       throw new CustomError(
@@ -173,20 +267,19 @@ export const updateSpace = async (
         403,
       );
     }
-    // If manager_id is being changed, validate if new manager exists and is correct role
-    if (manager_id !== undefined && manager_id !== space.manager_id) {
-      const newManager = await User.findByPk(manager_id);
+
+    if (managerId !== undefined && managerId !== space.managerId) {
+      const newManager = await User.findByPk(managerId);
       if (!newManager) {
         throw new CustomError('Specified new manager ID does not exist.', 400);
       }
       if (newManager.role !== 'manager' && newManager.role !== 'admin') {
-        // Admins can also manage spaces
         throw new CustomError(
           'A regular user cannot be assigned as a space manager.',
           400,
         );
       }
-      space.manager_id = manager_id;
+      space.managerId = managerId;
     }
 
     space.name = name || space.name;
@@ -204,7 +297,6 @@ export const updateSpace = async (
   }
 };
 
-// Delete a Space (Admin or the space's manager)
 export const deleteSpace = async (
   req: AuthRequest,
   res: Response,
@@ -221,8 +313,7 @@ export const deleteSpace = async (
       throw new CustomError('Space not found.', 404);
     }
 
-    // Authorization: Only admin or the assigned manager can delete the space
-    if (userRole !== 'admin' && space.manager_id !== userId) {
+    if (userRole !== 'admin' && space.managerId !== userId) {
       throw new CustomError(
         'Forbidden: You are not authorized to delete this space.',
         403,
@@ -231,7 +322,7 @@ export const deleteSpace = async (
 
     await space.destroy();
 
-    res.status(204).send(); // No content to send back
+    res.status(204).send();
   } catch (error) {
     next(error);
   }

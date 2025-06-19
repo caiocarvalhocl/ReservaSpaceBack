@@ -1,9 +1,8 @@
-import { Request, Response, NextFunction } from "express";
-import { SpaceResource, Space, Resource } from "../models";
-import { CustomError } from "../middlewares/errorHandler";
-import { Op } from "sequelize"; // Import Op for Sequelize operators
+import { Request, Response, NextFunction } from 'express';
+import { SpaceResource, Space, Resource } from '../models';
+import { CustomError } from '../middlewares/errorHandler';
+import { Op } from 'sequelize';
 
-// Extend Request to include user property from auth middlewares
 interface AuthRequest extends Request {
   user?: {
     id: number;
@@ -11,7 +10,6 @@ interface AuthRequest extends Request {
   };
 }
 
-// Add a resource to a space or update its quantity if it exists (Manager/Admin)
 export const addOrUpdateSpaceResource = async (
   req: AuthRequest,
   res: Response,
@@ -22,50 +20,47 @@ export const addOrUpdateSpaceResource = async (
 
     if (!spaceId || !resourceId || quantity === undefined || quantity < 0) {
       throw new CustomError(
-        "Space ID, Resource ID, and a valid quantity are required.",
+        'Space ID, Resource ID, and a valid quantity are required.',
         400,
       );
     }
 
     const space = await Space.findByPk(spaceId);
     if (!space) {
-      throw new CustomError("Space not found.", 404);
+      throw new CustomError('Space not found.', 404);
     }
 
     const resource = await Resource.findByPk(resourceId);
     if (!resource) {
-      throw new CustomError("Resource not found.", 404);
+      throw new CustomError('Resource not found.', 404);
     }
 
-    // Check if the authenticated user is the manager of the space or an admin
-    if (req.user?.role !== "admin" && req.user?.id !== space.manager_id) {
+    if (req.user?.role !== 'admin' && req.user?.id !== space.managerId) {
       throw new CustomError(
-        "Forbidden: You are not authorized to manage this space.",
+        'Forbidden: You are not authorized to manage this space.',
         403,
       );
     }
 
     let spaceResource = await SpaceResource.findOne({
-      where: { space_id: spaceId, resource_id: resourceId },
+      where: { spaceId, resourceId },
     });
 
     if (spaceResource) {
-      // Update existing
       spaceResource.quantity = quantity;
       await spaceResource.save();
       res.status(200).json({
-        message: "Space resource quantity updated successfully",
+        message: 'Space resource quantity updated successfully',
         spaceResource,
       });
     } else {
-      // Create new
       spaceResource = await SpaceResource.create({
-        space_id: spaceId,
-        resource_id: resourceId,
+        spaceId,
+        resourceId,
         quantity,
       });
       res.status(201).json({
-        message: "Resource added to space successfully",
+        message: 'Resource added to space successfully',
         spaceResource,
       });
     }
@@ -74,7 +69,6 @@ export const addOrUpdateSpaceResource = async (
   }
 };
 
-// Get all resources for a specific space (All authenticated users)
 export const getResourcesForSpace = async (
   req: AuthRequest,
   res: Response,
@@ -85,12 +79,12 @@ export const getResourcesForSpace = async (
 
     const space = await Space.findByPk(spaceId);
     if (!space) {
-      throw new CustomError("Space not found.", 404);
+      throw new CustomError('Space not found.', 404);
     }
 
     const spaceResources = await SpaceResource.findAll({
-      where: { space_id: spaceId },
-      include: [{ model: Resource, as: "resource" }], // Include resource details
+      where: { spaceId: spaceId },
+      include: [{ model: Resource, as: 'resource' }],
     });
 
     res.status(200).json(spaceResources);
@@ -99,37 +93,35 @@ export const getResourcesForSpace = async (
   }
 };
 
-// Remove a resource from a space (Manager/Admin)
 export const removeResourceFromSpace = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction,
 ) => {
   try {
-    const { spaceId, resourceId } = req.params; // Expecting spaceId and resourceId in params
+    const { spaceId, resourceId } = req.params;
 
     const space = await Space.findByPk(spaceId);
     if (!space) {
-      throw new CustomError("Space not found.", 404);
+      throw new CustomError('Space not found.', 404);
     }
 
-    // Check if the authenticated user is the manager of the space or an admin
-    if (req.user?.role !== "admin" && req.user?.id !== space.manager_id) {
+    if (req.user?.role !== 'admin' && req.user?.id !== space.managerId) {
       throw new CustomError(
-        "Forbidden: You are not authorized to manage this space.",
+        'Forbidden: You are not authorized to manage this space.',
         403,
       );
     }
 
     const result = await SpaceResource.destroy({
-      where: { space_id: spaceId, resource_id: resourceId },
+      where: { spaceId: spaceId, resourceId: resourceId },
     });
 
     if (result === 0) {
-      throw new CustomError("Space-resource association not found.", 404);
+      throw new CustomError('Space-resource association not found.', 404);
     }
 
-    res.status(204).send(); // No content
+    res.status(204).send();
   } catch (error) {
     next(error);
   }

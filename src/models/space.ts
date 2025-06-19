@@ -1,6 +1,5 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import { sequelize } from '../config/database';
-import { User } from './user';
 
 interface SpaceAttributes {
   id: number;
@@ -10,14 +9,15 @@ interface SpaceAttributes {
   imageUrl?: string;
   price?: number;
   description?: string;
-  manager_id?: number;
+  managerId?: number;
   isAvailable: boolean;
+  status: 'active' | 'maintenance' | 'inactive';
 }
 
 interface SpaceCreationAttributes
   extends Optional<
     SpaceAttributes,
-    'id' | 'description' | 'manager_id' | 'isAvailable'
+    'id' | 'description' | 'managerId' | 'isAvailable' | 'status'
   > {}
 
 class Space
@@ -31,8 +31,9 @@ class Space
   public imageUrl!: string;
   public price!: number;
   public description?: string;
-  public manager_id?: number;
+  public managerId?: number;
   public isAvailable!: boolean;
+  public status!: 'active' | 'maintenance' | 'inactive';
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -70,7 +71,7 @@ Space.init(
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    manager_id: {
+    managerId: {
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
@@ -83,13 +84,18 @@ Space.init(
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
+    status: {
+      type: DataTypes.TEXT,
+      defaultValue: 'active',
+      allowNull: false,
+    },
   },
   {
     sequelize,
     tableName: 'spaces',
     timestamps: true,
-    createdAt: 'created_at',
-    updatedAt: 'updated_at',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
   },
 );
 

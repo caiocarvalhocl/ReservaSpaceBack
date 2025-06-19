@@ -7,6 +7,7 @@ interface UserAttributes {
   email: string;
   password?: string; // Optional for creating, required for fetching
   phone?: string;
+  status: 'active' | 'inactive' | 'suspend';
   role: 'regular' | 'manager' | 'admin'; // Example roles
 }
 
@@ -22,6 +23,7 @@ export class User
   public email!: string;
   public password!: string;
   public phone?: string;
+  public status!: 'active' | 'inactive' | 'suspend';
   public role!: 'regular' | 'manager' | 'admin';
 
   // Timestamps
@@ -53,6 +55,11 @@ User.init(
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    status: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+      defaultValue: 'active',
+    },
     role: {
       type: DataTypes.TEXT,
       allowNull: false,
@@ -63,7 +70,7 @@ User.init(
     sequelize,
     tableName: 'users', // Match your DDL table name
     timestamps: true, // Sequelize adds createdAt and updatedAt columns
-    createdAt: 'created_at',
-    updatedAt: 'updated_at',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
   },
 );

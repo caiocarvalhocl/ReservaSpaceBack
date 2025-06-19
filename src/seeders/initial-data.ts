@@ -1,10 +1,11 @@
 import { QueryInterface, DataTypes, Sequelize } from 'sequelize';
 import bcrypt from 'bcryptjs';
 import { sequelize } from '../models';
+import { getRandomValues } from 'crypto';
 
-const SEED_PASSWORD = 'password123';
+const SEED_PASSWORD = '123';
 const FIXED_HASHED_PASSWORD =
-  '$2a$10$Ew/nQ.8i5y1T5.6.8X809.e1qWq3c0wM8v5t0k4s.2V6x0J6W7x.';
+  '$2a$12$uAliRqOX7YAeINVX.QpLIOL6mOzXcxJCbk9wHQM5hzYxxlQpEoyxK';
 
 interface BulkInsertResult {
   id: number;
@@ -43,16 +44,18 @@ const seeder = {
       'Equipamento de Yoga',
     ];
     const userRoles = ['regular', 'manager'];
+    let status = getRandomItem(['active', 'inactive', 'suspend']);
 
     const usersToInsert = [];
     usersToInsert.push({
-      name: 'Admin User',
-      email: 'admin@example.com',
+      name: 'caio',
+      email: 'caio@gmail.com',
       password: hashedPassword,
       phone: '11987654321',
       role: 'admin',
-      created_at: NOW,
-      updated_at: NOW,
+      status,
+      createdAt: NOW,
+      updatedAt: NOW,
     });
     usersToInsert.push({
       name: 'Manager One',
@@ -60,8 +63,9 @@ const seeder = {
       password: hashedPassword,
       phone: '21987654321',
       role: 'manager',
-      created_at: NOW,
-      updated_at: NOW,
+      status,
+      createdAt: NOW,
+      updatedAt: NOW,
     });
     usersToInsert.push({
       name: 'Manager Two',
@@ -69,18 +73,21 @@ const seeder = {
       password: hashedPassword,
       phone: '22987654321',
       role: 'manager',
-      created_at: NOW,
-      updated_at: NOW,
+      status,
+      createdAt: NOW,
+      updatedAt: NOW,
     });
     for (let i = 1; i <= 17; i++) {
+      status = getRandomItem(['active', 'inactive', 'suspend']);
       usersToInsert.push({
         name: `Regular User ${i}`,
         email: `user${i}@example.com`,
         password: hashedPassword,
         phone: `3${i.toString().padStart(10, '0')}`,
         role: 'regular',
-        created_at: NOW,
-        updated_at: NOW,
+        status,
+        createdAt: NOW,
+        updatedAt: NOW,
       });
     }
     const users = (await queryInterface.bulkInsert('users', usersToInsert, {
@@ -94,9 +101,9 @@ const seeder = {
       resourcesToInsert.push({
         name: resourceNames[i],
         description: `Description for ${resourceNames[i]}`,
-        available_quantity: getRandomInt(1, 20),
-        created_at: NOW,
-        updated_at: NOW,
+        availableQuantity: getRandomInt(1, 20),
+        createdAt: NOW,
+        updatedAt: NOW,
       });
     }
     const resources = (await queryInterface.bulkInsert(
@@ -106,7 +113,6 @@ const seeder = {
     )) as BulkInsertResult[];
     const resourceIds = resources.map(r => r.id);
 
-    // --- 3. Seed Spaces (20 spaces) ---
     const spacesToInsert = [];
     for (let i = 1; i <= 20; i++) {
       const type = getRandomItem(spaceTypes);
@@ -116,18 +122,20 @@ const seeder = {
       const managerId = getRandomItem(managerUserIds);
       const price = parseFloat((Math.random() * 500 + 50).toFixed(2));
       const imageUrl = null;
+      const status = getRandomItem(['active', 'maintenance', 'inactive']);
 
       spacesToInsert.push({
-        name: `Space ${i}`, // <-- REMOVED: (${type.replace('_', ' ')})
+        name: `Space ${i}`,
         type: type,
         capacity: capacity,
         description: `This is a beautiful ${type.replace('_', ' ')} for your needs.`,
-        manager_id: managerId,
+        managerId: managerId,
         isAvailable: isAvailable,
+        status: status,
         imageUrl: imageUrl,
         price: price,
-        created_at: NOW,
-        updated_at: NOW,
+        createdAt: NOW,
+        updatedAt: NOW,
       });
     }
 
@@ -147,11 +155,11 @@ const seeder = {
         }
         assignedResourceIds.push(resourceId);
         spaceResourcesToInsert.push({
-          space_id: spaceId,
-          resource_id: resourceId,
+          spaceId: spaceId,
+          resourceId: resourceId,
           quantity: getRandomInt(1, 5),
-          created_at: NOW,
-          updated_at: NOW,
+          createdAt: NOW,
+          updatedAt: NOW,
         });
       }
     }
@@ -173,15 +181,20 @@ const seeder = {
       const endTime = new Date(
         startTime.getTime() + getRandomInt(1, 4) * oneHour,
       );
-      const status = getRandomItem(['pendente', 'confirmada', 'cancelada']);
+      const status = getRandomItem([
+        'pending',
+        'confirmed',
+        'canceled',
+        'completed',
+      ]);
 
       reservationsToInsert.push({
-        space_id: spaceId,
-        user_id: userId,
-        start_time: startTime,
-        end_time: endTime,
+        spaceId: spaceId,
+        userId: userId,
+        startTime: startTime,
+        endTime: endTime,
         status: status,
-        created_at: NOW,
+        createdAt: NOW,
       });
     }
     const reservations = (await queryInterface.bulkInsert(
@@ -199,10 +212,10 @@ const seeder = {
         const actionUser = getRandomItem(allUserIds);
         const action = getRandomItem(actions);
         reservationHistoryToInsert.push({
-          reservation_id: reservation.id,
+          reservationId: reservation.id,
           action: action,
-          action_date: new Date(NOW.getTime() + getRandomInt(0, 5) * oneDay),
-          action_user: actionUser,
+          actionDate: new Date(NOW.getTime() + getRandomInt(0, 5) * oneDay),
+          actionUser: actionUser,
           details: `Action '${action}' performed on reservation ${reservation.id} by user ${actionUser}`,
         });
       }

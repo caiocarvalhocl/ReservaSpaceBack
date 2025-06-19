@@ -6,66 +6,56 @@ import { SpaceResource } from './spaceResource';
 import { Reservation } from './reservation';
 import { ReservationHistory } from './reservationHistory';
 
-// Define Associations
+User.hasMany(Space, { foreignKey: 'managerId', as: 'managedSpaces' });
+Space.belongsTo(User, { foreignKey: 'managerId', as: 'manager' });
 
-// User and Space (manager_id)
-User.hasMany(Space, { foreignKey: 'manager_id', as: 'managedSpaces' });
-Space.belongsTo(User, { foreignKey: 'manager_id', as: 'manager' });
-
-// Space and Resource (Many-to-Many through SpaceResource)
 Space.belongsToMany(Resource, {
   through: SpaceResource,
-  foreignKey: 'space_id',
+  foreignKey: 'spaceId',
   as: 'resources',
 });
 Resource.belongsToMany(Space, {
   through: SpaceResource,
-  foreignKey: 'resource_id',
+  foreignKey: 'resourceId',
   as: 'spaces',
 });
 
-// SpaceResource associations
-SpaceResource.belongsTo(Space, { foreignKey: 'space_id' });
-// Add the 'as' alias here to match the include statement in your controller
+SpaceResource.belongsTo(Space, { foreignKey: 'spaceId' });
+
 SpaceResource.belongsTo(Resource, {
-  foreignKey: 'resource_id',
+  foreignKey: 'resourceId',
   as: 'resource',
-}); // <--- ADDED 'as: 'resource''
-Space.hasMany(SpaceResource, { foreignKey: 'space_id', as: 'spaceResources' });
+});
+Space.hasMany(SpaceResource, { foreignKey: 'spaceId', as: 'spaceResources' });
 Resource.hasMany(SpaceResource, {
-  foreignKey: 'resource_id',
+  foreignKey: 'resourceId',
   as: 'resourceSpaces',
 });
 
-// User and Reservation
-User.hasMany(Reservation, { foreignKey: 'user_id', as: 'reservations' });
-Reservation.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+User.hasMany(Reservation, { foreignKey: 'userId', as: 'reservations' });
+Reservation.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
-// Space and Reservation
-Space.hasMany(Reservation, { foreignKey: 'space_id', as: 'reservations' });
-Reservation.belongsTo(Space, { foreignKey: 'space_id', as: 'space' });
+Space.hasMany(Reservation, { foreignKey: 'spaceId', as: 'reservations' });
+Reservation.belongsTo(Space, { foreignKey: 'spaceId', as: 'space' });
 
-// Reservation and ReservationHistory
 Reservation.hasMany(ReservationHistory, {
-  foreignKey: 'reservation_id',
+  foreignKey: 'reservationId',
   as: 'history',
 });
 ReservationHistory.belongsTo(Reservation, {
-  foreignKey: 'reservation_id',
+  foreignKey: 'reservationId',
   as: 'reservation',
 });
 
-// User and ReservationHistory (action_user)
 User.hasMany(ReservationHistory, {
-  foreignKey: 'action_user',
+  foreignKey: 'actionUser',
   as: 'actionHistory',
 });
 ReservationHistory.belongsTo(User, {
-  foreignKey: 'action_user',
+  foreignKey: 'actionUser',
   as: 'actionByUser',
 });
 
-// Export sequelize instance and models
 export {
   sequelize,
   User,

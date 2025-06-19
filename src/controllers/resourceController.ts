@@ -1,6 +1,6 @@
-import { Request, Response, NextFunction } from "express";
-import { Resource } from "../models";
-import { CustomError } from "../middlewares/errorHandler";
+import { Request, Response, NextFunction } from 'express';
+import { Resource } from '../models';
+import { CustomError } from '../middlewares/errorHandler';
 
 // Extend Request to include user property from auth middlewares
 interface AuthRequest extends Request {
@@ -17,20 +17,20 @@ export const createResource = async (
   next: NextFunction,
 ) => {
   try {
-    const { name, description, available_quantity } = req.body;
+    const { name, description, availableQuantity } = req.body;
 
-    if (!name || !available_quantity) {
-      throw new CustomError("Name and available quantity are required.", 400);
+    if (!name || !availableQuantity) {
+      throw new CustomError('Name and available quantity are required.', 400);
     }
 
     const newResource = await Resource.create({
       name,
       description,
-      available_quantity,
+      availableQuantity,
     });
 
     res.status(201).json({
-      message: "Resource created successfully",
+      message: 'Resource created successfully',
       resource: newResource,
     });
   } catch (error) {
@@ -63,7 +63,7 @@ export const getResourceById = async (
     const resource = await Resource.findByPk(id);
 
     if (!resource) {
-      throw new CustomError("Resource not found.", 404);
+      throw new CustomError('Resource not found.', 404);
     }
 
     res.status(200).json(resource);
@@ -80,26 +80,26 @@ export const updateResource = async (
 ) => {
   try {
     const { id } = req.params;
-    const { name, description, available_quantity } = req.body;
+    const { name, description, availableQuantity } = req.body;
 
     const resource = await Resource.findByPk(id);
 
     if (!resource) {
-      throw new CustomError("Resource not found.", 404);
+      throw new CustomError('Resource not found.', 404);
     }
 
     resource.name = name || resource.name;
     resource.description = description || resource.description;
-    resource.available_quantity =
-      available_quantity !== undefined
-        ? available_quantity
-        : resource.available_quantity;
+    resource.availableQuantity =
+      availableQuantity !== undefined
+        ? availableQuantity
+        : resource.availableQuantity;
 
     await resource.save();
 
     res
       .status(200)
-      .json({ message: "Resource updated successfully", resource });
+      .json({ message: 'Resource updated successfully', resource });
   } catch (error) {
     next(error);
   }
@@ -117,7 +117,7 @@ export const deleteResource = async (
     const resource = await Resource.findByPk(id);
 
     if (!resource) {
-      throw new CustomError("Resource not found.", 404);
+      throw new CustomError('Resource not found.', 404);
     }
 
     await resource.destroy();
