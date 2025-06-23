@@ -10,7 +10,8 @@
     "forceConsistentCasingInFileNames": true,
     "moduleResolution": "node",
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "emitDecoratorMetadata": true,
+    "removeComments": true
   },
   "include": [
     "src/**/*"

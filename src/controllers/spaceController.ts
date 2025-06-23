@@ -291,7 +291,7 @@ export const updateSpace = async (
 
     await space.save();
 
-    res.status(200).json({ message: 'Space updated successfully', space });
+    res.status(200).json({ message: 'Space updated successfully' });
   } catch (error) {
     next(error);
   }

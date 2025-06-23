@@ -51,3 +51,30 @@ export const getMyProfile = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ message: 'Server error fetching profile' });
   }
 };
+
+export const updateMultipleUsers = async (req: AuthRequest, res: Response) => {
+  try {
+    const updates: { id: number; [key: string]: any }[] = req.body;
+
+    if (!Array.isArray(updates) || updates.length === 0) return res.status(400).json({ message: 'Invalid payload' });
+
+    for (const update of updates) {
+      const { id, ...fields } = update;
+
+      const user = await User.findByPk(id);
+
+      if (!user) return res.status(400).json({ message: 'User not found' });
+
+      Object.keys(fields).forEach(key => {
+        const isKeyValid = key !== 'password' && key !== 'id';
+        if (isKeyValid) (user as any)[key] = fields[key];
+      });
+
+      await user.save();
+    }
+    return res.status(200).json({ message: 'Update completed' });
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({ message: 'Server error fetching profile' });
+  }
+};
