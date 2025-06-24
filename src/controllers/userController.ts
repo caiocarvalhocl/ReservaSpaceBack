@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import bcrypt from 'bcryptjs';
 import { User } from '../models/user';
 
 interface AuthRequest extends Request {
@@ -76,5 +77,33 @@ export const updateMultipleUsers = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('Error updating user:', error);
     res.status(500).json({ message: 'Server error fetching profile' });
+  }
+};
+
+export const createUser = async (req: AuthRequest, res: Response) => {
+  const { name, email, password, phone, role } = req.body;
+
+  try {
+    const existingUser = await User.findOne({ where: { email } });
+
+    if (existingUser) {
+      return res.status(400).json({ message: 'User with this email already exists' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      phone,
+      role,
+      status: 'active',
+    });
+
+    res.status(201).json({ message: 'User created' });
+  } catch (error) {
+    console.error('Error during creation:', error);
+    res.status(500).json({ message: 'Server error during registration' });
   }
 };
