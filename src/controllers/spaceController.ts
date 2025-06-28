@@ -10,14 +10,9 @@ interface AuthRequest extends Request {
   };
 }
 
-export const createSpace = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction,
-) => {
+export const createSpace = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { name, type, capacity, description, managerId, isAvailable } =
-      req.body;
+    const { name, type, capacity, price, description, managerId, status, imageUrl } = req.body;
     const userId = req.user?.id;
     const userRole = req.user?.role;
 
@@ -25,52 +20,28 @@ export const createSpace = async (
       throw new CustomError('Name, type, and capacity are required.', 400);
     }
 
-    let finalManagerId = managerId;
-    if (userRole === 'manager') {
-      finalManagerId = userId;
-    } else if (userRole !== 'admin' && managerId) {
-      throw new CustomError(
-        'Forbidden: Only managers and admins can specify a managerId.',
-        403,
-      );
-    }
-
-    if (finalManagerId) {
-      const managerExists = await User.findByPk(finalManagerId);
-      if (!managerExists) {
-        throw new CustomError('Specified manager ID does not exist.', 400);
-      }
-
-      if (managerExists.role !== 'manager' && managerExists.role !== 'admin') {
-        throw new CustomError(
-          'A regular user cannot be assigned as a space manager.',
-          400,
-        );
-      }
-    }
+    const managerExists = await User.findByPk(userId);
+    if (!managerExists) return res.status(400).json({ message: 'User not found!' });
 
     const newSpace = await Space.create({
       name,
       type,
       capacity,
       description,
-      managerId: finalManagerId,
-      isAvailable: isAvailable !== undefined ? isAvailable : false,
+      price,
+      managerId: userId,
+      status,
+      imageUrl,
+      isAvailable: status === 'active' ? true : false,
     });
 
-    res
-      .status(201)
-      .json({ message: 'Space created successfully', space: newSpace });
+    res.status(201).json({ message: 'Space created successfully', space: newSpace });
   } catch (error) {
     next(error);
   }
 };
 
-export const getAllSpaces = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction,
-) => {
+export const getAllSpaces = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const spaces = await Space.findAll({
       where: {
@@ -98,11 +69,7 @@ export const getAllSpaces = async (
   }
 };
 
-export const getSpaceById = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction,
-) => {
+export const getSpaceById = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const space = await Space.findByPk(id, {
@@ -133,11 +100,7 @@ export const getSpaceById = async (
   }
 };
 
-export const getLastReservationForSpaceAndUser = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction,
-) => {
+export const getLastReservationForSpaceAndUser = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const userId = req.user?.id;
     const spaceId = parseInt(req.params.spaceId, 10);
@@ -182,11 +145,7 @@ export const getLastReservationForSpaceAndUser = async (
   }
 };
 
-export const getMySpaces = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction,
-) => {
+export const getMySpaces = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const userId = req.user?.id;
 
@@ -232,15 +191,10 @@ export const getMySpaces = async (
   }
 };
 
-export const updateSpace = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction,
-) => {
+export const updateSpace = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const { name, type, capacity, description, managerId, isAvailable } =
-      req.body;
+    const { name, type, capacity, description, managerId, isAvailable } = req.body;
     const userId = req.user?.id;
     const userRole = req.user?.role;
 
@@ -251,21 +205,11 @@ export const updateSpace = async (
     }
 
     if (userRole !== 'admin' && space.managerId !== userId) {
-      throw new CustomError(
-        'Forbidden: You are not authorized to update this space.',
-        403,
-      );
+      throw new CustomError('Forbidden: You are not authorized to update this space.', 403);
     }
 
-    if (
-      managerId !== undefined &&
-      managerId !== space.managerId &&
-      userRole !== 'admin'
-    ) {
-      throw new CustomError(
-        'Forbidden: Only an admin can reassign a space manager.',
-        403,
-      );
+    if (managerId !== undefined && managerId !== space.managerId && userRole !== 'admin') {
+      throw new CustomError('Forbidden: Only an admin can reassign a space manager.', 403);
     }
 
     if (managerId !== undefined && managerId !== space.managerId) {
@@ -274,10 +218,7 @@ export const updateSpace = async (
         throw new CustomError('Specified new manager ID does not exist.', 400);
       }
       if (newManager.role !== 'manager' && newManager.role !== 'admin') {
-        throw new CustomError(
-          'A regular user cannot be assigned as a space manager.',
-          400,
-        );
+        throw new CustomError('A regular user cannot be assigned as a space manager.', 400);
       }
       space.managerId = managerId;
     }
@@ -286,8 +227,7 @@ export const updateSpace = async (
     space.type = type || space.type;
     space.capacity = capacity !== undefined ? capacity : space.capacity;
     space.description = description || space.description;
-    space.isAvailable =
-      isAvailable !== undefined ? isAvailable : space.isAvailable;
+    space.isAvailable = isAvailable !== undefined ? isAvailable : space.isAvailable;
 
     await space.save();
 
@@ -297,11 +237,7 @@ export const updateSpace = async (
   }
 };
 
-export const deleteSpace = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction,
-) => {
+export const deleteSpace = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const userId = req.user?.id;
@@ -314,10 +250,7 @@ export const deleteSpace = async (
     }
 
     if (userRole !== 'admin' && space.managerId !== userId) {
-      throw new CustomError(
-        'Forbidden: You are not authorized to delete this space.',
-        403,
-      );
+      throw new CustomError('Forbidden: You are not authorized to delete this space.', 403);
     }
 
     await space.destroy();
