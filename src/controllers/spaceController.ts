@@ -178,7 +178,7 @@ export const getMySpaces = async (req: AuthRequest, res: Response, next: NextFun
             },
           },
           order: [['createdAt', 'DESC']],
-          attributes: ['createdAt'],
+          attributes: ['createdAt', 'status', 'id'],
           limit: 1,
           required: false,
         },

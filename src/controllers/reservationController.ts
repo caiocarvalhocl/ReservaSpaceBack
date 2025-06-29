@@ -1,14 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { Op } from 'sequelize';
-import {
-  Reservation,
-  Space,
-  User,
-  ReservationHistory,
-  sequelize,
-  SpaceResource,
-  Resource,
-} from '../models';
+import { Reservation, Space, User, ReservationHistory, sequelize, SpaceResource, Resource } from '../models';
 import { CustomError } from '../middlewares/errorHandler';
 
 interface AuthRequest extends Request {
@@ -18,11 +10,7 @@ interface AuthRequest extends Request {
   };
 }
 
-export const createReservation = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction,
-) => {
+export const createReservation = async (req: AuthRequest, res: Response, next: NextFunction) => {
   const t = await sequelize.transaction();
 
   try {
@@ -30,10 +18,7 @@ export const createReservation = async (
     const userId = req.user?.id;
 
     if (!userId || !spaceId || !startTime || !endTime) {
-      throw new CustomError(
-        'User ID, Space ID, start time, and end time are required.',
-        400,
-      );
+      throw new CustomError('User ID, Space ID, start time, and end time are required.', 400);
     }
 
     const parsedStartTime = new Date(startTime);
@@ -52,10 +37,7 @@ export const createReservation = async (
       throw new CustomError('Space not found.', 404);
     }
     if (!space.isAvailable) {
-      throw new CustomError(
-        'This space is currently not available for reservation.',
-        400,
-      );
+      throw new CustomError('This space is currently not available for reservation.', 400);
     }
 
     const existingReservations = await Reservation.findOne({
@@ -79,10 +61,7 @@ export const createReservation = async (
     });
 
     if (existingReservations) {
-      throw new CustomError(
-        'Space is already reserved for part or all of the requested time slot.',
-        409,
-      );
+      throw new CustomError('Space is already reserved for part or all of the requested time slot.', 409);
     }
 
     const newReservation = await Reservation.create(
@@ -118,11 +97,7 @@ export const createReservation = async (
   }
 };
 
-export const getAllReservations = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction,
-) => {
+export const getAllReservations = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const reservations = await Reservation.findAll({
       include: [
@@ -136,11 +111,7 @@ export const getAllReservations = async (
   }
 };
 
-export const getReservationById = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction,
-) => {
+export const getReservationById = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const userId = req.user?.id;
@@ -158,10 +129,7 @@ export const getReservationById = async (
     }
 
     if (userRole === 'regular' && reservation.userId !== userId) {
-      throw new CustomError(
-        'Forbidden: You do not have permission to view this reservation.',
-        403,
-      );
+      throw new CustomError('Forbidden: You do not have permission to view this reservation.', 403);
     }
 
     res.status(200).json(reservation);
@@ -170,11 +138,7 @@ export const getReservationById = async (
   }
 };
 
-export const getMyReservations = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction,
-) => {
+export const getMyReservations = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const userId = req.user?.id;
 
@@ -188,16 +152,7 @@ export const getMyReservations = async (
         {
           model: Space,
           as: 'space',
-          attributes: [
-            'id',
-            'name',
-            'type',
-            'capacity',
-            'imageUrl',
-            'price',
-            'description',
-            'isAvailable',
-          ],
+          attributes: ['id', 'name', 'type', 'capacity', 'imageUrl', 'price', 'description', 'isAvailable'],
           include: [
             {
               model: SpaceResource,
@@ -207,12 +162,7 @@ export const getMyReservations = async (
                 {
                   model: Resource,
                   as: 'resource',
-                  attributes: [
-                    'id',
-                    'name',
-                    'description',
-                    'availableQuantity',
-                  ],
+                  attributes: ['id', 'name', 'description', 'availableQuantity'],
                 },
               ],
             },
@@ -229,11 +179,7 @@ export const getMyReservations = async (
   }
 };
 
-export const updateReservationStatus = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction,
-) => {
+export const updateReservationStatus = async (req: AuthRequest, res: Response, next: NextFunction) => {
   const t = await sequelize.transaction();
 
   try {
@@ -241,10 +187,7 @@ export const updateReservationStatus = async (
     const { status } = req.body;
     const userId = req.user?.id;
 
-    if (
-      !status ||
-      !['pendente', 'confirmada', 'cancelada', 'concluida'].includes(status)
-    ) {
+    if (!status || !['pending', 'confirmed', 'canceled', 'completed'].includes(status)) {
       throw new CustomError('Invalid status provided.', 400);
     }
 
@@ -254,11 +197,8 @@ export const updateReservationStatus = async (
       throw new CustomError('Reservation not found.', 404);
     }
 
-    if (['cancelada', 'concluida'].includes(reservation.status)) {
-      throw new CustomError(
-        `Cannot change status of a ${reservation.status} reservation.`,
-        400,
-      );
+    if (['canceled', 'completed'].includes(reservation.status)) {
+      throw new CustomError(`Cannot change status of a ${reservation.status} reservation.`, 400);
     }
 
     const oldStatus = reservation.status;
@@ -287,11 +227,7 @@ export const updateReservationStatus = async (
   }
 };
 
-export const cancelReservation = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction,
-) => {
+export const cancelReservation = async (req: AuthRequest, res: Response, next: NextFunction) => {
   const t = await sequelize.transaction();
 
   try {
@@ -306,20 +242,11 @@ export const cancelReservation = async (
     }
 
     if (userRole === 'regular' && reservation.userId !== userId) {
-      throw new CustomError(
-        'Forbidden: You do not have permission to cancel this reservation.',
-        403,
-      );
+      throw new CustomError('Forbidden: You do not have permission to cancel this reservation.', 403);
     }
 
-    if (
-      new Date() > reservation.endTime ||
-      reservation.status === 'completed'
-    ) {
-      throw new CustomError(
-        'Cannot cancel a past or completed reservation.',
-        400,
-      );
+    if (new Date() > reservation.endTime || reservation.status === 'completed') {
+      throw new CustomError('Cannot cancel a past or completed reservation.', 400);
     }
     if (reservation.status === 'canceled') {
       throw new CustomError('Reservation is already cancelled.', 400);
@@ -340,9 +267,7 @@ export const cancelReservation = async (
 
     await t.commit();
 
-    res
-      .status(200)
-      .json({ message: 'Reservation cancelled successfully', reservation });
+    res.status(200).json({ message: 'Reservation cancelled successfully', reservation });
   } catch (error) {
     await t.rollback();
     next(error);
