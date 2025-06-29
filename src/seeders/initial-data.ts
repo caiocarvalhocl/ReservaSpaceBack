@@ -1,11 +1,8 @@
-import { QueryInterface, DataTypes, Sequelize } from 'sequelize';
-import bcrypt from 'bcryptjs';
+import { QueryInterface } from 'sequelize';
 import { sequelize } from '../models';
-import { getRandomValues } from 'crypto';
 
 const SEED_PASSWORD = '123';
-const FIXED_HASHED_PASSWORD =
-  '$2a$12$uAliRqOX7YAeINVX.QpLIOL6mOzXcxJCbk9wHQM5hzYxxlQpEoyxK';
+const FIXED_HASHED_PASSWORD = '$2a$12$uAliRqOX7YAeINVX.QpLIOL6mOzXcxJCbk9wHQM5hzYxxlQpEoyxK';
 
 interface BulkInsertResult {
   id: number;
@@ -16,19 +13,10 @@ const seeder = {
     const hashedPassword = FIXED_HASHED_PASSWORD;
     const NOW = new Date();
 
-    const getRandomInt = (min: number, max: number) =>
-      Math.floor(Math.random() * (max - min + 1)) + min;
+    const getRandomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
     const getRandomItem = (arr: any[]) => arr[getRandomInt(0, arr.length - 1)];
-    const getRandomBool = () => Math.random() < 0.5;
 
-    const spaceTypes = [
-      'meeting_room',
-      'sports_court',
-      'auditorium',
-      'coworking',
-      'event_hall',
-      'studio',
-    ];
+    const spaceTypes = ['meeting_room', 'sports_court', 'auditorium', 'coworking', 'event_hall', 'studio'];
     const resourceNames = [
       'Projetor HD',
       'Quadro Branco',
@@ -43,7 +31,7 @@ const seeder = {
       'Iluminação Cênica',
       'Equipamento de Yoga',
     ];
-    const userRoles = ['regular', 'manager'];
+
     let status = getRandomItem(['active', 'inactive', 'suspend']);
 
     const usersToInsert = [];
@@ -53,7 +41,7 @@ const seeder = {
       password: hashedPassword,
       phone: '11987654321',
       role: 'admin',
-      status,
+      status: 'active',
       createdAt: NOW,
       updatedAt: NOW,
     });
@@ -106,23 +94,18 @@ const seeder = {
         updatedAt: NOW,
       });
     }
-    const resources = (await queryInterface.bulkInsert(
-      'resources',
-      resourcesToInsert,
-      { returning: ['id'] } as any,
-    )) as BulkInsertResult[];
+    const resources = (await queryInterface.bulkInsert('resources', resourcesToInsert, { returning: ['id'] } as any)) as BulkInsertResult[];
     const resourceIds = resources.map(r => r.id);
 
     const spacesToInsert = [];
     for (let i = 1; i <= 20; i++) {
       const type = getRandomItem(spaceTypes);
-      const capacity =
-        type === 'auditorium' ? getRandomInt(50, 200) : getRandomInt(5, 50);
-      const isAvailable = getRandomBool();
+      const capacity = type === 'auditorium' ? getRandomInt(50, 200) : getRandomInt(5, 50);
+      const status = getRandomItem(['active', 'maintenance', 'inactive']);
+      const isAvailable = status === 'active' ? true : false;
       const managerId = getRandomItem(managerUserIds);
       const price = parseFloat((Math.random() * 500 + 50).toFixed(2));
-      const imageUrl = null;
-      const status = getRandomItem(['active', 'maintenance', 'inactive']);
+      const imageUrl = null; // Atribui a imagem base64 com base no tipo
 
       spacesToInsert.push({
         name: `Space ${i}`,
@@ -173,20 +156,9 @@ const seeder = {
       const userId = getRandomItem(allUserIds);
       const spaceId = getRandomItem(spaceIds);
 
-      const startTime = new Date(
-        NOW.getTime() +
-          getRandomInt(1, 30) * oneDay +
-          getRandomInt(0, 23) * oneHour,
-      );
-      const endTime = new Date(
-        startTime.getTime() + getRandomInt(1, 4) * oneHour,
-      );
-      const status = getRandomItem([
-        'pending',
-        'confirmed',
-        'canceled',
-        'completed',
-      ]);
+      const startTime = new Date(NOW.getTime() + getRandomInt(1, 30) * oneDay + getRandomInt(0, 23) * oneHour);
+      const endTime = new Date(startTime.getTime() + getRandomInt(1, 4) * oneHour);
+      const status = getRandomItem(['pending', 'confirmed', 'canceled', 'completed']);
 
       reservationsToInsert.push({
         spaceId: spaceId,
@@ -197,11 +169,7 @@ const seeder = {
         createdAt: NOW,
       });
     }
-    const reservations = (await queryInterface.bulkInsert(
-      'reservations',
-      reservationsToInsert,
-      { returning: ['id'] } as any,
-    )) as BulkInsertResult[];
+    const reservations = (await queryInterface.bulkInsert('reservations', reservationsToInsert, { returning: ['id'] } as any)) as BulkInsertResult[];
 
     const reservationHistoryToInsert = [];
     const actions = ['created', 'status_changed', 'cancelled', 'completed'];
@@ -220,10 +188,7 @@ const seeder = {
         });
       }
     }
-    await queryInterface.bulkInsert(
-      'reservation_history',
-      reservationHistoryToInsert,
-    );
+    await queryInterface.bulkInsert('reservation_history', reservationHistoryToInsert);
   },
 
   down: async (queryInterface: QueryInterface) => {

@@ -1,5 +1,5 @@
 {
-  "name": "Reserva_Espacos",
+  "name": "ReservaSpace",
   "version": "1.0.0",
   "description": "",
   "main": "dist/server.js",
