@@ -45,34 +45,16 @@ const seeder = {
       createdAt: NOW,
       updatedAt: NOW,
     });
-    usersToInsert.push({
-      name: 'Manager One',
-      email: 'manager1@example.com',
-      password: hashedPassword,
-      phone: '21987654321',
-      role: 'manager',
-      status,
-      createdAt: NOW,
-      updatedAt: NOW,
-    });
-    usersToInsert.push({
-      name: 'Manager Two',
-      email: 'manager2@example.com',
-      password: hashedPassword,
-      phone: '22987654321',
-      role: 'manager',
-      status,
-      createdAt: NOW,
-      updatedAt: NOW,
-    });
-    for (let i = 1; i <= 17; i++) {
+
+    for (let i = 1; i <= 40; i++) {
+      const role = getRandomItem(['admin', 'manager', 'regular']);
       status = getRandomItem(['active', 'inactive', 'suspend']);
       usersToInsert.push({
-        name: `Regular User ${i}`,
+        name: `User ${i}`,
         email: `user${i}@example.com`,
         password: hashedPassword,
         phone: `3${i.toString().padStart(10, '0')}`,
-        role: 'regular',
+        role,
         status,
         createdAt: NOW,
         updatedAt: NOW,
@@ -81,7 +63,7 @@ const seeder = {
     const users = (await queryInterface.bulkInsert('users', usersToInsert, {
       returning: ['id'],
     } as any)) as BulkInsertResult[];
-    const managerUserIds = users.slice(1, 3).map(u => u.id);
+    const managerUserIds = users.slice(0, 3).map(u => u.id);
     const allUserIds = users.map(u => u.id);
 
     const resourcesToInsert = [];
@@ -98,14 +80,14 @@ const seeder = {
     const resourceIds = resources.map(r => r.id);
 
     const spacesToInsert = [];
-    for (let i = 1; i <= 20; i++) {
+    for (let i = 1; i <= 250; i++) {
       const type = getRandomItem(spaceTypes);
       const capacity = type === 'auditorium' ? getRandomInt(50, 200) : getRandomInt(5, 50);
       const status = getRandomItem(['active', 'maintenance', 'inactive']);
       const isAvailable = status === 'active' ? true : false;
       const managerId = getRandomItem(managerUserIds);
       const price = parseFloat((Math.random() * 500 + 50).toFixed(2));
-      const imageUrl = null; // Atribui a imagem base64 com base no tipo
+      const imageUrl = null;
 
       spacesToInsert.push({
         name: `Space ${i}`,
@@ -152,7 +134,7 @@ const seeder = {
     const oneHour = 60 * 60 * 1000;
     const oneDay = 24 * oneHour;
 
-    for (let i = 1; i <= 20; i++) {
+    for (let i = 1; i <= 150; i++) {
       const userId = getRandomItem(allUserIds);
       const spaceId = getRandomItem(spaceIds);
 
