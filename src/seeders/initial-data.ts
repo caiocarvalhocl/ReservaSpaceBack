@@ -80,7 +80,7 @@ const seeder = {
     const resourceIds = resources.map(r => r.id);
 
     const spacesToInsert = [];
-    for (let i = 1; i <= 250; i++) {
+    for (let i = 1; i <= 150; i++) {
       const type = getRandomItem(spaceTypes);
       const capacity = type === 'auditorium' ? getRandomInt(50, 200) : getRandomInt(5, 50);
       const status = getRandomItem(['active', 'maintenance', 'inactive']);
@@ -134,7 +134,7 @@ const seeder = {
     const oneHour = 60 * 60 * 1000;
     const oneDay = 24 * oneHour;
 
-    for (let i = 1; i <= 150; i++) {
+    for (let i = 1; i <= 50; i++) {
       const userId = getRandomItem(allUserIds);
       const spaceId = getRandomItem(spaceIds);
 
