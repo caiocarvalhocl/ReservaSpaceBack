@@ -11,11 +11,7 @@ interface AuthRequest extends Request {
 }
 
 // Create a new Resource (Admin only)
-export const createResource = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction,
-) => {
+export const createResource = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { name, description, availableQuantity } = req.body;
 
@@ -39,11 +35,7 @@ export const createResource = async (
 };
 
 // Get all Resources (All authenticated users)
-export const getAllResources = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction,
-) => {
+export const getAllResources = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const resources = await Resource.findAll();
     res.status(200).json(resources);
@@ -52,12 +44,7 @@ export const getAllResources = async (
   }
 };
 
-// Get Resource by ID (All authenticated users)
-export const getResourceById = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction,
-) => {
+export const getResourceById = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const resource = await Resource.findByPk(id);
@@ -73,11 +60,7 @@ export const getResourceById = async (
 };
 
 // Update a Resource (Admin only)
-export const updateResource = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction,
-) => {
+export const updateResource = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const { name, description, availableQuantity } = req.body;
@@ -90,27 +73,18 @@ export const updateResource = async (
 
     resource.name = name || resource.name;
     resource.description = description || resource.description;
-    resource.availableQuantity =
-      availableQuantity !== undefined
-        ? availableQuantity
-        : resource.availableQuantity;
+    resource.availableQuantity = availableQuantity !== undefined ? availableQuantity : resource.availableQuantity;
 
     await resource.save();
 
-    res
-      .status(200)
-      .json({ message: 'Resource updated successfully', resource });
+    res.status(200).json({ message: 'Resource updated successfully', resource });
   } catch (error) {
     next(error);
   }
 };
 
 // Delete a Resource (Admin only)
-export const deleteResource = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction,
-) => {
+export const deleteResource = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
 

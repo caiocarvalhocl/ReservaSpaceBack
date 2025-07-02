@@ -165,7 +165,7 @@ export const getMySpaces = async (req: AuthRequest, res: Response, next: NextFun
             {
               model: Resource,
               as: 'resource',
-              attributes: ['id', 'name', 'description'],
+              attributes: ['id', 'name'],
             },
           ],
         },
@@ -193,32 +193,19 @@ export const getMySpaces = async (req: AuthRequest, res: Response, next: NextFun
 export const updateSpace = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const { name, type, capacity, description, managerId, isAvailable } = req.body;
-    const userId = req.user?.id;
-    const userRole = req.user?.role;
+    const { name, type, capacity, description, managerId, status, price, resources } = req.body;
 
     const space = await Space.findByPk(id);
 
-    if (!space) {
-      throw new CustomError('Space not found.', 404);
-    }
-
-    if (userRole !== 'admin' && space.managerId !== userId) {
-      throw new CustomError('Forbidden: You are not authorized to update this space.', 403);
-    }
-
-    if (managerId !== undefined && managerId !== space.managerId && userRole !== 'admin') {
-      throw new CustomError('Forbidden: Only an admin can reassign a space manager.', 403);
-    }
+    if (!space) throw new CustomError('Space not found.', 404);
 
     if (managerId !== undefined && managerId !== space.managerId) {
       const newManager = await User.findByPk(managerId);
-      if (!newManager) {
-        throw new CustomError('Specified new manager ID does not exist.', 400);
-      }
-      if (newManager.role !== 'manager' && newManager.role !== 'admin') {
-        throw new CustomError('A regular user cannot be assigned as a space manager.', 400);
-      }
+
+      if (!newManager) throw new CustomError('Specified new manager ID does not exist.', 400);
+
+      if (newManager.role !== 'manager' && newManager.role !== 'admin') throw new CustomError('A regular user cannot be assigned as a space manager.', 400);
+
       space.managerId = managerId;
     }
 
@@ -226,10 +213,25 @@ export const updateSpace = async (req: AuthRequest, res: Response, next: NextFun
     space.type = type || space.type;
     space.capacity = capacity !== undefined ? capacity : space.capacity;
     space.description = description || space.description;
-    space.isAvailable = isAvailable !== undefined ? isAvailable : space.isAvailable;
+    space.price = price !== undefined ? price : 0.0;
+    space.status = status !== undefined ? status : 'inactive';
+
+    if (Array.isArray(resources)) {
+      await SpaceResource.destroy({ where: { spaceId: +id } });
+
+      if (resources.length > 0) {
+        const createRelations = resources.map(resource =>
+          SpaceResource.create({
+            spaceId: +id,
+            resourceId: resource.id,
+            quantity: resource.quantity || 1,
+          }),
+        );
+        await Promise.all(createRelations);
+      }
+    }
 
     await space.save();
-
     res.status(200).json({ message: 'Space updated successfully' });
   } catch (error) {
     next(error);
