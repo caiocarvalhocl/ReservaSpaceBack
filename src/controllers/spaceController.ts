@@ -220,18 +220,43 @@ export const updateSpace = async (req: AuthRequest, res: Response, next: NextFun
       await SpaceResource.destroy({ where: { spaceId: +id } });
 
       if (resources.length > 0) {
-        const createRelations = resources.map(resource =>
+        const resourcesToCreate = [];
+        const resourcesToRelate: any[] = [];
+
+        for (const resourceData of resources) {
+          if (resourceData.id === undefined) {
+            resourcesToCreate.push(
+              Resource.create({
+                availableQuantity: resourceData.availableQuantity || 1,
+                name: resourceData.name,
+                description: resourceData.description || 'New Resource',
+              }).then(newResource => {
+                resourcesToRelate.push(newResource);
+              }),
+            );
+          } else {
+            const existingResource = await Resource.findByPk(resourceData.id);
+            if (existingResource) {
+              resourcesToRelate.push(existingResource);
+            } else {
+              console.warn(`Resource with ID ${resourceData.id} not found and will be ignored.`);
+            }
+          }
+        }
+
+        await Promise.all(resourcesToCreate);
+
+        const createRelations = resourcesToRelate.map(resource =>
           SpaceResource.create({
             spaceId: +id,
             resourceId: resource.id,
-            quantity: resource.quantity || 1,
+            quantity: resource.availableQuantity || 1,
           }),
         );
         await Promise.all(createRelations);
       }
     }
 
-    await space.save();
     res.status(200).json({ message: 'Space updated successfully' });
   } catch (error) {
     next(error);
