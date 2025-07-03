@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import { Resource } from '../models';
 import { CustomError } from '../middlewares/errorHandler';
 
-// Extend Request to include user property from auth middlewares
 interface AuthRequest extends Request {
   user?: {
     id: number;
@@ -10,7 +9,6 @@ interface AuthRequest extends Request {
   };
 }
 
-// Create a new Resource (Admin only)
 export const createResource = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { name, description, availableQuantity } = req.body;
@@ -34,7 +32,6 @@ export const createResource = async (req: AuthRequest, res: Response, next: Next
   }
 };
 
-// Get all Resources (All authenticated users)
 export const getAllResources = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const resources = await Resource.findAll();
@@ -59,7 +56,6 @@ export const getResourceById = async (req: AuthRequest, res: Response, next: Nex
   }
 };
 
-// Update a Resource (Admin only)
 export const updateResource = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
@@ -83,7 +79,6 @@ export const updateResource = async (req: AuthRequest, res: Response, next: Next
   }
 };
 
-// Delete a Resource (Admin only)
 export const deleteResource = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
@@ -96,7 +91,7 @@ export const deleteResource = async (req: AuthRequest, res: Response, next: Next
 
     await resource.destroy();
 
-    res.status(204).send(); // No content to send back
+    res.status(204).send();
   } catch (error) {
     next(error);
   }

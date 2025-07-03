@@ -4,6 +4,71 @@ import jwt from 'jsonwebtoken';
 import { User } from '../models/user';
 import { config } from '../config';
 
+/**
+ * @swagger
+ * tags:
+ *   name: Auth
+ *   description: User authentication and registration
+ */
+
+/**
+ * @swagger
+ * /auth/register:
+ *   post:
+ *     summary: Register a new user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *               - password
+ *               - phone
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Name of the user
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: Email of the user
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 description: Password for the user
+ *               phone:
+ *                 type: string
+ *                 description: Phone number of the user
+ *               role:
+ *                 type: string
+ *                 enum: [regular]
+ *                 description: Role of the user (default to regular)
+ *     responses:
+ *       201:
+ *         description: User registered successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     name:
+ *                       type: string
+ *                     role:
+ *                       type: string
+ *       400:
+ *         description: Bad request, user already exists or invalid input
+ *       500:
+ *         description: Server error
+ */
 export const register = async (req: Request, res: Response) => {
   const { name, email, password, phone } = req.body;
 

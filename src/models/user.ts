@@ -5,19 +5,15 @@ interface UserAttributes {
   id: number;
   name: string;
   email: string;
-  password?: string; // Optional for creating, required for fetching
+  password?: string;
   phone?: string;
   status: 'active' | 'inactive' | 'suspend';
-  role: 'regular' | 'manager' | 'admin'; // Example roles
+  role: 'regular' | 'manager' | 'admin';
 }
 
-interface UserCreationAttributes
-  extends Optional<UserAttributes, 'id' | 'role'> {}
+interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'role'> {}
 
-export class User
-  extends Model<UserAttributes, UserCreationAttributes>
-  implements UserAttributes
-{
+export class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
   public id!: number;
   public name!: string;
   public email!: string;
@@ -26,7 +22,6 @@ export class User
   public status!: 'active' | 'inactive' | 'suspend';
   public role!: 'regular' | 'manager' | 'admin';
 
-  // Timestamps
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
@@ -68,8 +63,8 @@ User.init(
   },
   {
     sequelize,
-    tableName: 'users', // Match your DDL table name
-    timestamps: true, // Sequelize adds createdAt and updatedAt columns
+    tableName: 'users',
+    timestamps: true,
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
   },
