@@ -11,14 +11,6 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
-  mongodb:
-    image: mongo:latest
-    container_name: mongodb
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongodb_data:/data/db
-
   api:
     build:
       context: .
@@ -36,15 +28,12 @@ services:
       DB_PASSWORD: postgres
       DB_NAME: ReservaSpace 
       JWT_SECRET: 123
-      MONGODB_URI: mongodb://mongodb:27017/ReservaSpace
     volumes:
       - .:/api
       - /api/node_modules
     command: npm run dev
     depends_on:
       - database 
-      - mongodb
 
 volumes:
   pgdata:
-  mongodb_data:
