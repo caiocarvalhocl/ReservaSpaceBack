@@ -1,14 +1,17 @@
 import { app } from './app';
 import { sequelize } from './models';
 import { config } from './config';
+import { connectMongoDB } from './config/mongo';
 
 const startServer = async () => {
   try {
     await sequelize.authenticate();
-    console.log('Database connection has been established successfully.');
+    console.log('PostgreSQL database connection has been established successfully.');
 
-    await sequelize.sync({ alter: true });
-    console.log('Database synchronized.');
+    await sequelize.sync({ force: true });
+    console.log('PostgreSQL database synchronized.');
+
+    await connectMongoDB();
 
     app.listen(config.port, () => {
       console.log(`Server is running on port ${config.port}`);

@@ -13,4 +13,7 @@ export const config = {
     name: process.env.DB_NAME || 'ReservaSpace',
   },
   jwtSecret: process.env.JWT_SECRET || '123',
+  mongodb: {
+    uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/ReservaSpace',
+  },
 };
