@@ -257,6 +257,8 @@ export const updateSpace = async (req: AuthRequest, res: Response, next: NextFun
       }
     }
 
+    space.save();
+
     res.status(200).json({ message: 'Space updated successfully' });
   } catch (error) {
     next(error);
