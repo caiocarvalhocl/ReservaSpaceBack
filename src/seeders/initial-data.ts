@@ -190,6 +190,9 @@ if (require.main === module) {
       await sequelize.authenticate();
       console.log('Database connected. Running seed...');
 
+      await sequelize.sync({ alter: true });
+      console.log('Database synchronized before seeding.');
+
       const args = process.argv.slice(2);
       if (args.includes('--undo')) {
         await seeder.down(sequelize.getQueryInterface());
